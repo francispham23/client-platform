@@ -1,6 +1,7 @@
 import Colors from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import {
+  useUser,
   useSignIn,
   useSignUp,
   isClerkAPIResponseError,
@@ -15,42 +16,30 @@ import {
   useClearByFocusCell,
 } from "react-native-confirmation-code-field";
 
+import { useSupabase } from "@/lib/supabase";
+
 const CELL_COUNT = 6;
 
+type SearchParams = {
+  phone: string;
+  signin: string;
+};
+
 const Page = () => {
-  const { phone, signin } = useLocalSearchParams<{
-    phone: string;
-    signin: string;
-  }>();
-
-  const [code, setCode] = useState("");
-
+  const { user } = useUser();
   const { signIn } = useSignIn();
   const { signUp, setActive } = useSignUp();
+
+  const supabase = useSupabase();
+  const { phone, signin } = useLocalSearchParams<SearchParams>();
+
+  const [code, setCode] = useState("");
 
   const ref = useBlurOnFulfill({ value: code, cellCount: CELL_COUNT });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
     value: code,
     setValue: setCode,
   });
-
-  useEffect(() => {
-    if (code.length === 6) signin === "true" ? verifySignIn() : verifyCode();
-  }, [code]);
-
-  const verifyCode = async () => {
-    try {
-      await signUp!.attemptPhoneNumberVerification({
-        code,
-      });
-      await setActive!({ session: signUp!.createdSessionId });
-    } catch (err) {
-      console.log("VerifyCode Error", JSON.stringify(err, null, 2));
-      if (isClerkAPIResponseError(err)) {
-        Alert.alert("Error", err.errors[0].message);
-      }
-    }
-  };
 
   const verifySignIn = async () => {
     try {
@@ -66,6 +55,55 @@ const Page = () => {
       }
     }
   };
+
+  const verifyCode = async () => {
+    try {
+      await signUp!.attemptPhoneNumberVerification({
+        code,
+      });
+      await setActive!({ session: signUp!.createdSessionId });
+    } catch (err) {
+      console.log("VerifyCode Error", JSON.stringify(err, null, 2));
+      if (isClerkAPIResponseError(err)) {
+        Alert.alert("Error", err.errors[0].message);
+      }
+    }
+  };
+
+  // Verify the code
+  useEffect(() => {
+    if (code.length === 6) signin === "true" ? verifySignIn() : verifyCode();
+  }, [code]);
+
+  useEffect(() => {
+    const saveUserToSupabase = async () => {
+      if (signin || !user) return;
+
+      const { data, error } = await supabase.from("users").insert([
+        {
+          id: user.id,
+          email: user.emailAddresses[0]?.emailAddress,
+          name: user.fullName,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          phone_number: user.phoneNumbers[0]?.phoneNumber,
+          image_url: user.imageUrl,
+          metadata: {
+            lastLogin: new Date().toISOString(),
+            // Add any other metadata you want to track
+          },
+        },
+      ]);
+
+      if (error) {
+        console.error("Error creating user:", error);
+      } else {
+        console.info("User created: ", data);
+      }
+    };
+
+    saveUserToSupabase();
+  }, [user]);
 
   return (
     <View style={defaultStyles.container}>

@@ -10,7 +10,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Button,
   TouchableOpacity,
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
