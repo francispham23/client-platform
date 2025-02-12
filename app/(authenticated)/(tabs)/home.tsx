@@ -61,6 +61,9 @@ export default function HomeScreen() {
                   Duration: {Math.floor(bookingInfo.duration / 60)}h{" "}
                   {bookingInfo.duration % 60}min
                 </Text>
+                <Text style={styles.bookingPrice}>
+                  Total Service Charge: ${bookingInfo.totalPrice}
+                </Text>
 
                 <Text style={styles.servicesTitle}>Services:</Text>
                 {bookingInfo.services.map((service, index) => (
@@ -121,7 +124,13 @@ const styles = StyleSheet.create({
   },
   bookingDuration: {
     fontSize: 16,
+    marginBottom: 8,
+  },
+  bookingPrice: {
+    fontSize: 16,
     marginBottom: 15,
+    color: "#007AFF",
+    fontWeight: "500",
   },
   servicesTitle: {
     fontSize: 18,

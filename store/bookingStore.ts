@@ -8,6 +8,7 @@ export interface BookingInfo {
   duration: number;
   timeSlots: string[];
   services: string[];
+  totalPrice: number;
 }
 export interface SelectedServices {
   services: { [key: string]: boolean };
@@ -18,6 +19,7 @@ export interface BookingStore {
   selectedServices: {
     services: { [key: string]: boolean };
     duration: number;
+    price: number;
   };
   addBooking: (booking: BookingInfo) => void;
   loadBookings: () => void;
@@ -25,7 +27,8 @@ export interface BookingStore {
   setSelectedServices: (
     name: string,
     isSelected: boolean,
-    serviceDuration: number
+    serviceDuration: number,
+    servicePrice: number
   ) => void;
 }
 
@@ -37,6 +40,7 @@ export const useBookingStore = create<BookingStore>((set) => ({
   selectedServices: {
     services: {},
     duration: 0,
+    price: 0,
   },
 
   addBooking: (booking: BookingInfo) => {
@@ -56,10 +60,10 @@ export const useBookingStore = create<BookingStore>((set) => ({
   },
 
   resetSelectedServices: () => {
-    set({ selectedServices: { services: {}, duration: 0 } });
+    set({ selectedServices: { services: {}, duration: 0, price: 0 } });
   },
 
-  setSelectedServices: (name, isSelected, serviceDuration) =>
+  setSelectedServices: (name, isSelected, serviceDuration, servicePrice) =>
     set((state) => ({
       selectedServices: {
         services: {
@@ -69,6 +73,9 @@ export const useBookingStore = create<BookingStore>((set) => ({
         duration: isSelected
           ? state.selectedServices.duration + serviceDuration
           : state.selectedServices.duration - serviceDuration,
+        price: isSelected
+          ? state.selectedServices.price + servicePrice
+          : state.selectedServices.price - servicePrice,
       },
     })),
 }));

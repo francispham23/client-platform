@@ -1,6 +1,6 @@
 export interface ServiceItem {
   name: string;
-  price: string | number;
+  price: number;
   category?: string;
   duration: number; // Duration in minutes
 }
@@ -26,16 +26,16 @@ export const services: Services = [
       { name: "New set Acrylic Short/Medium", price: 45, duration: 75 },
       { name: "Re-fill Acrylic", price: 40, duration: 60 },
       { name: "Hard gel/Acrylic overlay", price: 37, duration: 60 },
-      { name: "Long / Extra Long", price: "+5", duration: 15 },
+      { name: "Long / Extra Long", price: 5, duration: 15 },
     ],
   },
   {
     category: "Add On",
     items: [
-      { name: "Charm/Crystal", price: "+5~15", duration: 15 },
-      { name: "French tip/Ombre", price: "+10", duration: 15 },
-      { name: "Chrome/Magnetic Cat-eye polish", price: "+10", duration: 15 },
-      { name: "Nails Art", price: "+5~15", duration: 15 },
+      { name: "Charm/Crystal", price: 10, duration: 15 },
+      { name: "French tip/Ombre", price: 10, duration: 15 },
+      { name: "Chrome/Magnetic Cat-eye polish", price: 10, duration: 15 },
+      { name: "Nails Art", price: 10, duration: 15 },
     ],
   },
 ];

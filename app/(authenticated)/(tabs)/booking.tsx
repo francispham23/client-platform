@@ -33,7 +33,7 @@ export default function BookingScreen() {
 
   const {
     bookings,
-    selectedServices: { duration, services },
+    selectedServices: { duration, price, services },
   } = useBookingStore();
   const durationMinutes = duration;
 
@@ -101,6 +101,7 @@ export default function BookingScreen() {
       date: selectedDate,
       startTime: selectedTime,
       duration: durationMinutes,
+      totalPrice: price,
       timeSlots: selectedSlots,
       services: services
         ? Object.keys(services).filter(

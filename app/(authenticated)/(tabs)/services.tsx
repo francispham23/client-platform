@@ -18,9 +18,13 @@ export default function ServicesScreen() {
   const { selectedServices, setSelectedServices } = useBookingStore();
   const { totalPrice, totalDuration } = useCalculateTotals(services);
 
-  const handleServiceToggle = (name: string, duration: number) => {
+  const handleServiceToggle = (
+    name: string,
+    duration: number,
+    price: number
+  ) => {
     const isCurrentlySelected = selectedServices.services[name] || false;
-    setSelectedServices(name, !isCurrentlySelected, duration);
+    setSelectedServices(name, !isCurrentlySelected, duration, price);
   };
 
   const handleNavigateToBooking = () => {
@@ -53,7 +57,9 @@ export default function ServicesScreen() {
                 <TouchableOpacity
                   key={itemIndex}
                   style={styles.serviceItem}
-                  onPress={() => handleServiceToggle(item.name, item.duration)}
+                  onPress={() =>
+                    handleServiceToggle(item.name, item.duration, item.price)
+                  }
                   activeOpacity={0.7}
                 >
                   <View style={styles.serviceLeftContent}>
@@ -88,7 +94,7 @@ export default function ServicesScreen() {
         {totalPrice > 0 && (
           <View style={styles.summary}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Price:</Text>
+              <Text style={styles.summaryLabel}>Total Service Charge:</Text>
               <Text style={styles.priceValue}>${totalPrice}</Text>
             </View>
             <View style={styles.summaryRow}>
