@@ -31,67 +31,73 @@ const Page = () => {
   const { signUp } = useSignUp();
   const { signIn } = useSignIn();
 
+  const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [showNameInput, setShowNameInput] = useState(false);
 
   const onAuth = async (type: AuthType) => {
     const fullPhoneNumber = `+1${phoneNumber}`;
 
     if (type === AuthType.Phone) {
-      // sign in with phone number
-      try {
-        const { supportedFirstFactors } = await signIn!.create({
-          identifier: fullPhoneNumber,
-        });
+      // if the user does not have an account, create one
+      if (showNameInput) {
+        try {
+          await signUp!.create({
+            phoneNumber: fullPhoneNumber,
+            firstName: name,
+          });
+          signUp!.preparePhoneNumberVerification();
 
-        const firstPhoneFactor: any = supportedFirstFactors?.find(
-          (factor: any) => {
-            return factor.strategy === "phone_code";
-          }
-        );
+          router.push({
+            pathname: "/verify/[phone]",
+            params: { phone: fullPhoneNumber },
+          });
+        } catch (error) {
+          Alert.alert("SignUp Error", "System error. Please try again later.");
+        }
+      } else {
+        // sign in with phone number
+        try {
+          const { supportedFirstFactors } = await signIn!.create({
+            identifier: fullPhoneNumber,
+          });
 
-        const { phoneNumberId } = firstPhoneFactor;
+          const firstPhoneFactor: any = supportedFirstFactors?.find(
+            (factor: any) => {
+              return factor.strategy === "phone_code";
+            }
+          );
 
-        await signIn!.prepareFirstFactor({
-          strategy: "phone_code",
-          phoneNumberId,
-        });
+          const { phoneNumberId } = firstPhoneFactor;
 
-        router.push({
-          pathname: "/verify/[phone]",
-          params: { phone: fullPhoneNumber, signin: "true" },
-        });
-      } catch (error) {
-        // if the user does not have an account, create one
-        if (isClerkAPIResponseError(error)) {
-          if (error.errors[0].code === "form_identifier_not_found") {
-            try {
-              await signUp!.create({
-                phoneNumber: fullPhoneNumber,
-              });
-              signUp!.preparePhoneNumberVerification();
+          await signIn!.prepareFirstFactor({
+            strategy: "phone_code",
+            phoneNumberId,
+          });
 
-              router.push({
-                pathname: "/verify/[phone]",
-                params: { phone: fullPhoneNumber },
-              });
-            } catch (err) {
+          router.push({
+            pathname: "/verify/[phone]",
+            params: { phone: fullPhoneNumber, signin: "true" },
+          });
+        } catch (error) {
+          // if the user does not have an account, create one
+          if (isClerkAPIResponseError(error)) {
+            if (error.errors[0].code === "form_identifier_not_found") {
+              setShowNameInput(true);
+            } else {
               Alert.alert(
-                "SignUp Error",
+                "SignIn Error",
                 "System error. Please try again later."
               );
             }
-          } else {
-            Alert.alert(
-              "SignIn Error",
-              "System error. Please try again later."
-            );
           }
         }
       }
     }
   };
 
-  const handleOnPress = () => onAuth(AuthType.Phone);
+  const disabled =
+    phoneNumber.length !== 10 || (showNameInput && name.length === 0);
 
   return (
     <KeyboardAvoidingView
@@ -110,23 +116,37 @@ const Page = () => {
             style={[styles.input, { flex: 1 }]}
             placeholder="Mobile number"
             placeholderTextColor={Colors.gray}
-            keyboardType="numeric"
+            keyboardType="phone-pad"
             value={phoneNumber}
             onChangeText={setPhoneNumber}
           />
         </View>
+        {showNameInput ? (
+          <View>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Name"
+              placeholderTextColor={Colors.gray}
+              keyboardType="default"
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+        ) : null}
 
         <View style={{ flex: 1 }} />
 
         <TouchableOpacity
           style={[
             defaultStyles.pillButton,
-            phoneNumber !== "" ? styles.enabled : styles.disabled,
+            disabled ? styles.disabled : styles.enabled,
             { marginBottom: 20 },
           ]}
-          onPress={handleOnPress}
+          onPress={() => onAuth(AuthType.Phone)}
         >
-          <Text style={defaultStyles.buttonText}>Start Booking</Text>
+          <Text style={defaultStyles.buttonText}>
+            {showNameInput ? "What is your name?" : "Start Booking"}
+          </Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
