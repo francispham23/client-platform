@@ -33,7 +33,7 @@ const Page = () => {
 
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  const onSignup = async (type: AuthType) => {
+  const onAuth = async (type: AuthType) => {
     const fullPhoneNumber = `+1${phoneNumber}`;
 
     if (type === AuthType.Phone) {
@@ -61,8 +61,6 @@ const Page = () => {
           params: { phone: fullPhoneNumber, signin: "true" },
         });
       } catch (error) {
-        console.log("SignIn Error", JSON.stringify(error, null, 2));
-
         // if the user does not have an account, create one
         if (isClerkAPIResponseError(error)) {
           if (error.errors[0].code === "form_identifier_not_found") {
@@ -76,17 +74,24 @@ const Page = () => {
                 pathname: "/verify/[phone]",
                 params: { phone: fullPhoneNumber },
               });
-            } catch (error) {
-              console.log("SignUp Error", JSON.stringify(error, null, 2));
-              Alert.alert("Error", "System error. Please try again later.");
+            } catch (err) {
+              Alert.alert(
+                "SignUp Error",
+                "System error. Please try again later."
+              );
             }
           } else {
-            Alert.alert("Error", "System error. Please try again later.");
+            Alert.alert(
+              "SignIn Error",
+              "System error. Please try again later."
+            );
           }
         }
       }
     }
   };
+
+  const handleOnPress = () => onAuth(AuthType.Phone);
 
   return (
     <KeyboardAvoidingView
@@ -119,7 +124,7 @@ const Page = () => {
             phoneNumber !== "" ? styles.enabled : styles.disabled,
             { marginBottom: 20 },
           ]}
-          onPress={() => onSignup(AuthType.Phone)}
+          onPress={handleOnPress}
         >
           <Text style={defaultStyles.buttonText}>Start Booking</Text>
         </TouchableOpacity>

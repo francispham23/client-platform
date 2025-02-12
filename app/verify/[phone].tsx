@@ -27,8 +27,8 @@ type SearchParams = {
 
 const Page = () => {
   const { user } = useUser();
-  const { signIn } = useSignIn();
-  const { signUp, setActive } = useSignUp();
+  const { signIn, setActive: setSignInActive } = useSignIn();
+  const { signUp, setActive: setSignUpActive } = useSignUp();
 
   const supabase = useSupabase();
   const { phone, signin } = useLocalSearchParams<SearchParams>();
@@ -41,18 +41,24 @@ const Page = () => {
     setValue: setCode,
   });
 
+  const catchError = (error: unknown, signin?: boolean) => {
+    if (isClerkAPIResponseError(error)) {
+      Alert.alert(
+        `${signin ? "Sign In" : "Sign Up"} Error`,
+        error.errors[0].message
+      );
+    }
+  };
+
   const verifySignIn = async () => {
     try {
       await signIn!.attemptFirstFactor({
         strategy: "phone_code",
         code,
       });
-      await setActive!({ session: signIn!.createdSessionId });
+      await setSignInActive!({ session: signIn!.createdSessionId });
     } catch (err) {
-      console.log("VerifySignIn Error", JSON.stringify(err, null, 2));
-      if (isClerkAPIResponseError(err)) {
-        Alert.alert("Error", err.errors[0].message);
-      }
+      catchError(err, true);
     }
   };
 
@@ -61,12 +67,9 @@ const Page = () => {
       await signUp!.attemptPhoneNumberVerification({
         code,
       });
-      await setActive!({ session: signUp!.createdSessionId });
+      await setSignUpActive!({ session: signUp!.createdSessionId });
     } catch (err) {
-      console.log("VerifyCode Error", JSON.stringify(err, null, 2));
-      if (isClerkAPIResponseError(err)) {
-        Alert.alert("Error", err.errors[0].message);
-      }
+      catchError(err);
     }
   };
 
@@ -75,6 +78,7 @@ const Page = () => {
     if (code.length === 6) signin === "true" ? verifySignIn() : verifyCode();
   }, [code]);
 
+  // Save the user to the SupaBase database
   useEffect(() => {
     const saveUserToSupabase = async () => {
       if (signin || !user) return;

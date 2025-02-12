@@ -9,7 +9,7 @@ import {
 import { Stack, useRouter } from "expo-router";
 import { Calendar } from "react-native-calendars";
 
-import { useBookingStore } from "@/store/bookingStore";
+import { BookingInfo, useBookingStore } from "@/store/bookingStore";
 import { generateTimeSlots } from "@/utils";
 
 // Helper function to format time
@@ -18,15 +18,6 @@ const formatTime = (hour: number, minute: number) => {
   const formattedMinute = minute.toString().padStart(2, "0");
   return `${formattedHour}:${formattedMinute} ${hour >= 12 ? "PM" : "AM"}`;
 };
-
-interface BookingInfo {
-  id: string;
-  date: string;
-  startTime: string;
-  duration: number;
-  timeSlots: string[];
-  services: string[];
-}
 
 export default function BookingScreen() {
   const router = useRouter();
