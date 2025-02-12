@@ -9,9 +9,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 
 import { formatDuration } from "@/utils";
+import { services } from "@/constants/Services";
 import { useBookingStore } from "@/store/bookingStore";
 import { useCalculateTotals } from "@/hooks/useCalculateTotals";
-import { services, ServiceItem } from "@/constants/Services";
 
 export default function ServicesScreen() {
   const router = useRouter();

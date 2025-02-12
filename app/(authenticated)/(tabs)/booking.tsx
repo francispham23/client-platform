@@ -1,3 +1,4 @@
+import { useState, useMemo, useEffect, Fragment } from "react";
 import {
   View,
   Text,
@@ -7,7 +8,7 @@ import {
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Calendar } from "react-native-calendars";
-import { useState, useMemo, useEffect } from "react";
+
 import { useBookingStore } from "@/store/bookingStore";
 import { generateTimeSlots } from "@/utils";
 
@@ -139,7 +140,7 @@ export default function BookingScreen() {
       />
 
       <ScrollView style={styles.scrollView}>
-        <>
+        <Fragment>
           <Calendar
             style={styles.calendar}
             minDate={today}
@@ -206,7 +207,7 @@ export default function BookingScreen() {
               </View>
             </View>
           ) : null}
-        </>
+        </Fragment>
       </ScrollView>
 
       {selectedDate && selectedTime ? (

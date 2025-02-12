@@ -1,5 +1,6 @@
 import { useBookingStore } from "@/store/bookingStore";
 import { Services } from "@/constants/Services";
+
 export const useCalculateTotals = (services: Services) => {
   const { selectedServices } = useBookingStore();
 

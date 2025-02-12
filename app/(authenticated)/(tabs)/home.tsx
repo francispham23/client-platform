@@ -1,34 +1,15 @@
+import { useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+
 import { useBookingStore } from "@/store/bookingStore";
-import { useBooking } from "@/hooks/useBooking";
-import { useUser } from "@clerk/clerk-expo";
 
 export default function HomeScreen() {
-  const { getItems } = useBooking();
-  const { user } = useUser();
-  console.log('User: ', user);
   const { bookings, loadBookings } = useBookingStore();
 
   useEffect(() => {
     loadBookings();
   }, []);
-
-  useEffect(() => {
-
-    const loadingBookings = async () => {
-      try {
-        const onlineBooking = await getItems();
-        console.log("All onlineBooking:", onlineBooking);
-      } catch (error) {
-        console.error("Error loading onlineBooking:", error);
-      }
-    };
-    if (user) {
-      loadingBookings();
-    }
-  }, [getItems]);
 
   const isCurrentBooking = (bookingDate: string, startTime: string) => {
     const now = new Date();

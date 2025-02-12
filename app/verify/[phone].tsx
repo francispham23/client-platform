@@ -16,7 +16,7 @@ import {
   useClearByFocusCell,
 } from "react-native-confirmation-code-field";
 
-import { useSupabase } from "@/lib/supabase";
+import { useSupabase } from "@/hooks/useSupabase";
 
 const CELL_COUNT = 6;
 
