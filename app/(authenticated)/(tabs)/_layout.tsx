@@ -48,6 +48,7 @@ const Layout = () => {
           tabBarIcon: ({ size, color }) => (
             <FontAwesome name="line-chart" size={size} color={color} />
           ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen

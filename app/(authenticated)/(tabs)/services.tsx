@@ -3,6 +3,8 @@ import {
   Text,
   ScrollView,
   StyleSheet,
+  Dimensions,
+  ImageBackground,
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,87 +33,96 @@ export default function ServicesScreen() {
     router.push({ pathname: "/booking" });
   };
 
+  const width = Dimensions.get("window").width;
+  const height = Dimensions.get("window").height;
+
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: "Services",
-          headerStyle: {
-            backgroundColor: "#f8f8f8",
-          },
-        }}
-      />
-      <View style={styles.mainContainer}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.title}>Kate's Nails Studio</Text>
-          <Text style={styles.note}>#Removal included on the set</Text>
+      <ImageBackground
+        style={{ flex: 1, width, height }}
+        source={require("@/assets/images/nails-studio-bg.jpg")}
+        resizeMode="cover"
+      >
+        <Stack.Screen
+          options={{
+            title: "Services",
+            headerStyle: {
+              backgroundColor: "#f8f8f8",
+            },
+          }}
+        />
+        <View style={styles.mainContainer}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.title}>Kate's Nails Studio</Text>
+            <Text style={styles.note}>#Removal included on the set</Text>
 
-          {services.map((section, index) => (
-            <View key={index} style={styles.section}>
-              <Text style={styles.categoryTitle}>{section.category}</Text>
-              {section.items.map((item, itemIndex) => (
-                <TouchableOpacity
-                  key={itemIndex}
-                  style={styles.serviceItem}
-                  onPress={() =>
-                    handleServiceToggle(item.name, item.duration, item.price)
-                  }
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.serviceLeftContent}>
-                    <Text style={styles.serviceName}>{item.name}</Text>
-                    <Text style={styles.duration}>
-                      {formatDuration(item.duration)}
-                    </Text>
-                  </View>
-                  <View style={styles.serviceRightContent}>
-                    <Text style={styles.servicePrice}>{item.price}</Text>
-                    <Ionicons
-                      name={
-                        selectedServices.services[item.name]
-                          ? "checkbox"
-                          : "square-outline"
-                      }
-                      size={24}
-                      color={
-                        selectedServices.services[item.name]
-                          ? "#007AFF"
-                          : "#666"
-                      }
-                      style={styles.checkbox}
-                    />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ))}
-        </ScrollView>
+            {services.map((section, index) => (
+              <View key={index} style={styles.section}>
+                <Text style={styles.categoryTitle}>{section.category}</Text>
+                {section.items.map((item, itemIndex) => (
+                  <TouchableOpacity
+                    key={itemIndex}
+                    style={styles.serviceItem}
+                    onPress={() =>
+                      handleServiceToggle(item.name, item.duration, item.price)
+                    }
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.serviceLeftContent}>
+                      <Text style={styles.serviceName}>{item.name}</Text>
+                      <Text style={styles.duration}>
+                        {formatDuration(item.duration)}
+                      </Text>
+                    </View>
+                    <View style={styles.serviceRightContent}>
+                      <Text style={styles.servicePrice}>{item.price}</Text>
+                      <Ionicons
+                        name={
+                          selectedServices.services[item.name]
+                            ? "checkbox"
+                            : "square-outline"
+                        }
+                        size={24}
+                        color={
+                          selectedServices.services[item.name]
+                            ? "#007AFF"
+                            : "#666"
+                        }
+                        style={styles.checkbox}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ))}
+          </ScrollView>
 
-        {totalPrice > 0 && (
-          <View style={styles.summary}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Service Charge:</Text>
-              <Text style={styles.priceValue}>${totalPrice}</Text>
+          {totalPrice > 0 && (
+            <View style={styles.summary}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total Service Charge:</Text>
+                <Text style={styles.priceValue}>${totalPrice}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total Duration:</Text>
+                <Text style={styles.summaryValue}>
+                  {formatDuration(totalDuration)}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.transferButton}
+                onPress={handleNavigateToBooking}
+              >
+                <Text style={styles.transferButtonText}>Book Appointment</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Duration:</Text>
-              <Text style={styles.summaryValue}>
-                {formatDuration(totalDuration)}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.transferButton}
-              onPress={handleNavigateToBooking}
-            >
-              <Text style={styles.transferButtonText}>Book Appointment</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+          )}
+        </View>
+      </ImageBackground>
     </View>
   );
 }
