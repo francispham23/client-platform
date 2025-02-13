@@ -60,17 +60,6 @@ const Layout = () => {
           headerTransparent: true,
         }}
       />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: "Account",
-          tabBarIcon: ({ size, color }) => (
-            <FontAwesome name="th" size={size} color={color} />
-          ),
-          header: () => <CustomHeader />,
-          headerTransparent: true,
-        }}
-      />
     </Tabs>
   );
 };
