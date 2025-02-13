@@ -2,22 +2,37 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Stack } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/hooks/useSupabase";
-import { BookingInfo } from "@/store/bookingStore";
 import { useQuery } from "@tanstack/react-query";
+
+interface BookingInfo {
+  id: string;
+  date: string;
+  startTime: string;
+  duration: number;
+  timeSlots: string[];
+  services: string[];
+  totalPrice: number;
+}
 
 export default function HomeScreen() {
   const { user } = useUser();
   const supabase = useSupabase();
 
+  const isAdmin = user?.phoneNumbers[0].phoneNumber === "7785120389";
+
   const { data: bookings = [], isLoading } = useQuery({
-    queryKey: ["bookings", user?.id],
+    queryKey: ["bookings", user?.id, isAdmin],
     queryFn: async (): Promise<BookingInfo[]> => {
-      const { data, error } = await supabase
+      const query = supabase
         .from("bookings")
         .select("*")
-        .eq("user_id", user?.id)
         .order("date", { ascending: false });
 
+      if (!isAdmin) {
+        query.eq("user_id", user?.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
       return data.map((booking) => ({
