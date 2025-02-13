@@ -9,10 +9,11 @@ import {
 import { Stack, useRouter } from "expo-router";
 import { Calendar } from "react-native-calendars";
 import { useUser } from "@clerk/clerk-expo";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { generateTimeSlots } from "@/utils";
 import { useSupabase } from "@/hooks/useSupabase";
-import { BookingInfo, useBookingStore } from "@/store/bookingStore";
+import { useBookingStore } from "@/store/bookingStore";
 
 // Helper function to format time
 const formatTime = (hour: number, minute: number) => {
@@ -25,6 +26,7 @@ export default function BookingScreen() {
   const router = useRouter();
   const { user } = useUser();
   const supabase = useSupabase();
+  const queryClient = useQueryClient();
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -35,10 +37,35 @@ export default function BookingScreen() {
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split("T")[0];
 
+  const { data: existingBookings = [] } = useQuery({
+    queryKey: ["bookings", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", user?.id);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Update isSlotBooked to use Supabase data
+  const isSlotBooked = (date: string, time: string) => {
+    return existingBookings.some((booking) => {
+      if (booking.date === date) {
+        return booking.time_slots.includes(time);
+      }
+      return false;
+    });
+  };
+
+  // Remove bookings from useBookingStore destructuring
   const {
-    bookings,
     selectedServices: { duration, price, services },
   } = useBookingStore();
+
   const durationMinutes = duration;
 
   // Reset selections when duration changes
@@ -51,16 +78,6 @@ export default function BookingScreen() {
     setSelectedDate(date);
     setSelectedTime(null);
     setSelectedSlots([]);
-  };
-
-  // Add function to check if slot is booked
-  const isSlotBooked = (date: string, time: string) => {
-    return bookings.some((booking) => {
-      if (booking.date === date) {
-        return booking.timeSlots.includes(time);
-      }
-      return false;
-    });
   };
 
   // Update handleTimeSelect to check for booked slots
@@ -97,51 +114,45 @@ export default function BookingScreen() {
     setSelectedSlots(newSelectedSlots);
   };
 
-  const handleConfirmBooking = async () => {
+  const { mutate: addBooking } = useMutation({
+    mutationFn: async (booking: {
+      user_id: string;
+      date: string;
+      start_time: string;
+      duration: number;
+      total_price: number;
+      time_slots: string[];
+      services: string[];
+    }) => {
+      const { error } = await supabase.from("bookings").insert([booking]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      useBookingStore.getState().resetSelectedServices();
+      router.push("/home");
+    },
+    onError: (error) => {
+      console.error("Error creating booking:", error);
+    },
+  });
+
+  const handleConfirmBooking = () => {
     if (!selectedDate || !selectedTime || !user) return;
 
-    const { error } = await supabase.from("bookings").insert([
-      {
-        user_id: user.id,
-        date: selectedDate,
-        start_time: selectedTime,
-        duration: durationMinutes,
-        total_price: price,
-        time_slots: selectedSlots,
-        services: services
-          ? Object.keys(services).filter(
-              (key) => services[key as keyof typeof services]
-            )
-          : [],
-      },
-    ]);
-
-    if (error) {
-      console.error("Error creating booking:", error);
-      return;
-    }
-
-    /* For Local Storage */
-    const bookingInfo: BookingInfo = {
-      id: Date.now().toString(),
+    addBooking({
+      user_id: user.id,
       date: selectedDate,
-      startTime: selectedTime,
+      start_time: selectedTime,
       duration: durationMinutes,
-      totalPrice: price,
-      timeSlots: selectedSlots,
+      total_price: price,
+      time_slots: selectedSlots,
       services: services
         ? Object.keys(services).filter(
             (key) => services[key as keyof typeof services]
           )
         : [],
-    };
-    // Add booking to store
-    useBookingStore.getState().addBooking(bookingInfo);
-    // Reset selected services
-    useBookingStore.getState().resetSelectedServices();
-
-    // Navigate to home screen
-    router.push("/home");
+    });
   };
 
   return (

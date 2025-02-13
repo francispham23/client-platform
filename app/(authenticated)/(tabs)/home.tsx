@@ -1,15 +1,45 @@
-import { useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Stack } from "expo-router";
-
-import { useBookingStore } from "@/store/bookingStore";
+import { useUser } from "@clerk/clerk-expo";
+import { useSupabase } from "@/hooks/useSupabase";
+import { BookingInfo } from "@/store/bookingStore";
+import { useQuery } from "@tanstack/react-query";
 
 export default function HomeScreen() {
-  const { bookings, loadBookings } = useBookingStore();
+  const { user } = useUser();
+  const supabase = useSupabase();
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
+  const { data: bookings = [], isLoading } = useQuery({
+    queryKey: ["bookings", user?.id],
+    queryFn: async (): Promise<BookingInfo[]> => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("date", { ascending: false });
+
+      if (error) throw error;
+
+      return data.map((booking) => ({
+        id: booking.id,
+        date: booking.date,
+        startTime: booking.start_time,
+        duration: booking.duration,
+        totalPrice: booking.total_price,
+        timeSlots: booking.time_slots,
+        services: booking.services,
+      }));
+    },
+    enabled: !!user,
+  });
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.noBookings}>Loading bookings...</Text>
+      </View>
+    );
+  }
 
   const isCurrentBooking = (bookingDate: string, startTime: string) => {
     const now = new Date();
