@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useQuery } from "@tanstack/react-query";
+import { useHeaderHeight } from "@react-navigation/elements";
 
 interface BookingInfo {
   id: string;
@@ -17,6 +18,7 @@ interface BookingInfo {
 export default function HomeScreen() {
   const { user } = useUser();
   const supabase = useSupabase();
+  const headerHeight = useHeaderHeight();
 
   const isAdmin = user?.phoneNumbers[0].phoneNumber === "7785120389";
 
@@ -73,7 +75,11 @@ export default function HomeScreen() {
         }}
       />
 
-      <ScrollView>
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+        }}
+      >
         <Text style={styles.sectionTitle}>Your Bookings</Text>
         {bookings.length === 0 ? (
           <Text style={styles.noBookings}>No bookings yet</Text>

@@ -6,10 +6,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { useAuth } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
+import { useUser } from "@clerk/clerk-expo";
+import { Fragment } from "react";
 
 const CustomHeader = () => {
-  const { top } = useSafeAreaInsets();
+  const { user } = useUser();
   const { signOut } = useAuth();
+  const { top } = useSafeAreaInsets();
+
+  // TODO: More features coming...
+  const isHidden = true;
 
   return (
     <BlurView intensity={80} tint={"extraLight"} style={{ paddingTop: top }}>
@@ -27,36 +33,42 @@ const CustomHeader = () => {
         <Link href={"/(authenticated)/(modals)/account-details"} asChild>
           <TouchableOpacity
             style={{
-              width: 40,
+              width: 240,
               height: 40,
               borderRadius: 20,
-              backgroundColor: Colors.gray,
+              backgroundColor: Colors.lightGray,
               justifyContent: "center",
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "500", fontSize: 16 }}>
-              SG
+            <Text
+              style={{ color: Colors.primary, fontWeight: "500", fontSize: 16 }}
+            >
+              Welcome, {user?.firstName}!
             </Text>
           </TouchableOpacity>
         </Link>
 
-        <View style={styles.searchSection}>
-          <Ionicons
-            style={styles.searchIcon}
-            name="search"
-            size={20}
-            color={Colors.dark}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Search"
-            placeholderTextColor={Colors.dark}
-          />
-        </View>
-        <View style={styles.circle}>
-          <Ionicons name={"stats-chart"} size={20} color={Colors.dark} />
-        </View>
+        {isHidden ? null : (
+          <Fragment>
+            <View style={styles.searchSection}>
+              <Ionicons
+                style={styles.searchIcon}
+                name="search"
+                size={20}
+                color={Colors.dark}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Search"
+                placeholderTextColor={Colors.dark}
+              />
+            </View>
+            <View style={styles.circle}>
+              <Ionicons name={"stats-chart"} size={20} color={Colors.dark} />
+            </View>
+          </Fragment>
+        )}
 
         <TouchableOpacity onPress={() => signOut()}>
           <View style={styles.circle}>
@@ -71,7 +83,7 @@ const CustomHeader = () => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     alignItems: "center",
   },
   btn: {
