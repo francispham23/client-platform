@@ -8,9 +8,11 @@ import {
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Calendar } from "react-native-calendars";
+import { useUser } from "@clerk/clerk-expo";
 
-import { BookingInfo, useBookingStore } from "@/store/bookingStore";
 import { generateTimeSlots } from "@/utils";
+import { useSupabase } from "@/hooks/useSupabase";
+import { BookingInfo, useBookingStore } from "@/store/bookingStore";
 
 // Helper function to format time
 const formatTime = (hour: number, minute: number) => {
@@ -21,6 +23,8 @@ const formatTime = (hour: number, minute: number) => {
 
 export default function BookingScreen() {
   const router = useRouter();
+  const { user } = useUser();
+  const supabase = useSupabase();
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -93,9 +97,31 @@ export default function BookingScreen() {
     setSelectedSlots(newSelectedSlots);
   };
 
-  const handleConfirmBooking = () => {
-    if (!selectedDate || !selectedTime) return;
+  const handleConfirmBooking = async () => {
+    if (!selectedDate || !selectedTime || !user) return;
 
+    const { error } = await supabase.from("bookings").insert([
+      {
+        user_id: user.id,
+        date: selectedDate,
+        start_time: selectedTime,
+        duration: durationMinutes,
+        total_price: price,
+        time_slots: selectedSlots,
+        services: services
+          ? Object.keys(services).filter(
+              (key) => services[key as keyof typeof services]
+            )
+          : [],
+      },
+    ]);
+
+    if (error) {
+      console.error("Error creating booking:", error);
+      return;
+    }
+
+    /* For Local Storage */
     const bookingInfo: BookingInfo = {
       id: Date.now().toString(),
       date: selectedDate,
@@ -109,10 +135,8 @@ export default function BookingScreen() {
           )
         : [],
     };
-
     // Add booking to store
     useBookingStore.getState().addBooking(bookingInfo);
-
     // Reset selected services
     useBookingStore.getState().resetSelectedServices();
 
