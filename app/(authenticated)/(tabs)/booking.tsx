@@ -34,9 +34,6 @@ export default function BookingScreen() {
 
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split("T")[0];
-
   const { data: existingBookings = [] } = useQuery({
     queryKey: ["bookings", user?.id],
     queryFn: async () => {
@@ -155,6 +152,32 @@ export default function BookingScreen() {
     });
   };
 
+  // Add function to check if date is weekend
+  const isWeekend = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDay();
+    return day === 5 || day === 6; // 5 is Saturday, 6 is Sunday
+  };
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
+
+  // Create disabled dates object for weekends
+  const disabledDates: {
+    [key: string]: { disabled: boolean; disableTouchEvent: boolean };
+  } = {};
+  let currentDate = new Date(today);
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  while (currentDate <= oneYearFromNow) {
+    const dateString = currentDate.toISOString().split("T")[0];
+    if (isWeekend(dateString)) {
+      disabledDates[dateString] = { disabled: true, disableTouchEvent: true };
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -176,6 +199,7 @@ export default function BookingScreen() {
             }
             markedDates={{
               [selectedDate]: { selected: true, selectedColor: "#007AFF" },
+              ...disabledDates,
             }}
             theme={{
               todayTextColor: "#007AFF",
@@ -183,6 +207,7 @@ export default function BookingScreen() {
             }}
           />
 
+          {/* Select Time Spot */}
           {selectedDate ? (
             <View style={styles.timeContainer}>
               <Text style={styles.sectionTitle}>Available Times</Text>

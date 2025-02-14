@@ -20,7 +20,7 @@ export default function HomeScreen() {
   const supabase = useSupabase();
   const headerHeight = useHeaderHeight();
 
-  const isAdmin = user?.phoneNumbers[0].phoneNumber === "7785120389";
+  const isAdmin = user?.phoneNumbers[0].phoneNumber === "+17785120389";
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["bookings", user?.id, isAdmin],
