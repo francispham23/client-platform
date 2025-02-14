@@ -7,6 +7,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 
 interface BookingInfo {
   id: string;
+  userId: string;
   date: string;
   startTime: string;
   duration: number;
@@ -20,7 +21,7 @@ export default function HomeScreen() {
   const supabase = useSupabase();
   const headerHeight = useHeaderHeight();
 
-  const isAdmin = user?.phoneNumbers[0].phoneNumber === "+17785120389";
+  const isAdmin = user?.phoneNumbers[0].phoneNumber === "+12015550100";
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["bookings", user?.id, isAdmin],
@@ -35,10 +36,12 @@ export default function HomeScreen() {
       }
 
       const { data, error } = await query;
+
       if (error) throw error;
 
       return data.map((booking) => ({
         id: booking.id,
+        userId: booking.user_id,
         date: booking.date,
         startTime: booking.start_time,
         duration: booking.duration,
@@ -49,6 +52,20 @@ export default function HomeScreen() {
     },
     enabled: !!user,
   });
+
+  // Add query to fetch users
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("users").select("id, name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin,
+  });
+
+  // Create a map of user IDs to names
+  const userMap = Object.fromEntries(users.map((user) => [user.id, user.name]));
 
   if (isLoading) {
     return (
@@ -108,6 +125,11 @@ export default function HomeScreen() {
                 <Text style={styles.bookingTime}>
                   Time: {bookingInfo.startTime}
                 </Text>
+                {isAdmin && userMap[bookingInfo.userId] ? (
+                  <Text style={styles.bookingClient}>
+                    Client: {userMap[bookingInfo.userId]}
+                  </Text>
+                ) : null}
                 <Text style={styles.bookingDuration}>
                   Duration: {Math.floor(bookingInfo.duration / 60)}h{" "}
                   {bookingInfo.duration % 60}min
@@ -170,6 +192,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bookingTime: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  bookingClient: {
     fontSize: 16,
     marginBottom: 8,
   },
