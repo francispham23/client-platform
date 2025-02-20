@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Calendar } from "react-native-calendars";
@@ -14,6 +15,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { generateTimeSlots } from "@/utils";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useBookingStore } from "@/store/bookingStore";
+import Colors from "@/constants/Colors";
 
 // Helper function to format time
 const formatTime = (hour: number, minute: number) => {
@@ -31,6 +33,7 @@ export default function BookingScreen() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
@@ -127,6 +130,7 @@ export default function BookingScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       useBookingStore.getState().resetSelectedServices();
+      setModalVisible(true);
       router.push("/home");
     },
     onError: (error) => {
@@ -272,6 +276,46 @@ export default function BookingScreen() {
           </TouchableOpacity>
         </View>
       ) : null}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          // Alert.alert("Modal has been closed.");
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>
+              Thank you for booking with me! I will sms you shortly for
+              confirming the appointment!
+            </Text>
+            <TouchableOpacity
+              style={{
+                width: 240,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: Colors.lightGray,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text
+                style={{
+                  color: Colors.primary,
+                  fontWeight: "500",
+                  fontSize: 16,
+                }}
+              >
+                OK
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -360,5 +404,45 @@ const styles = StyleSheet.create({
   },
   bookedTimeText: {
     color: "#FF4444",
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonOpen: {
+    backgroundColor: "#F194FF",
+  },
+  buttonClose: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
   },
 });
