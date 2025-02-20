@@ -99,6 +99,12 @@ const Page = () => {
   const disabled =
     phoneNumber.length !== 10 || (showNameInput && name.length === 0);
 
+  const buttonStyle = [
+    defaultStyles.pillButton,
+    disabled ? styles.disabled : styles.enabled,
+    { marginBottom: 20 },
+  ];
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -137,11 +143,7 @@ const Page = () => {
         <View style={{ flex: 1 }} />
 
         <TouchableOpacity
-          style={[
-            defaultStyles.pillButton,
-            disabled ? styles.disabled : styles.enabled,
-            { marginBottom: 20 },
-          ]}
+          style={buttonStyle}
           onPress={() => onAuth(AuthType.Phone)}
         >
           <Text style={defaultStyles.buttonText}>

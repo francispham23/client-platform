@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { Stack } from "expo-router";
+import { Link, Stack } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useQuery } from "@tanstack/react-query";
@@ -21,7 +21,8 @@ export default function HomeScreen() {
   const supabase = useSupabase();
   const headerHeight = useHeaderHeight();
 
-  const isAdmin = user?.phoneNumbers[0].phoneNumber === "+17785120389";
+  // Check if the user is an admin
+  const isAdmin = user?.phoneNumbers[0].phoneNumber === "+12015550100";
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["bookings", user?.id, isAdmin],
@@ -57,7 +58,9 @@ export default function HomeScreen() {
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("users").select("id, name");
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, name, phone_number");
       if (error) throw error;
       return data;
     },
@@ -65,7 +68,12 @@ export default function HomeScreen() {
   });
 
   // Create a map of user IDs to names
-  const userMap = Object.fromEntries(users.map((user) => [user.id, user.name]));
+  const userMap = Object.fromEntries(
+    users.map((user) => [
+      user.id,
+      { name: user.name, phone: user.phone_number },
+    ])
+  );
 
   if (isLoading) {
     return (
@@ -126,9 +134,17 @@ export default function HomeScreen() {
                   Time: {bookingInfo.startTime}
                 </Text>
                 {isAdmin && userMap[bookingInfo.userId] ? (
-                  <Text style={styles.bookingClient}>
-                    Client: {userMap[bookingInfo.userId]}
-                  </Text>
+                  <>
+                    <Text style={styles.bookingClient}>
+                      Client: {userMap[bookingInfo.userId].name}
+                    </Text>
+                    <Text style={styles.bookingPhone}>
+                      Phone:{" "}
+                      <Link href={`sms:${userMap[bookingInfo.userId].phone}`}>
+                        {userMap[bookingInfo.userId].phone}
+                      </Link>
+                    </Text>
+                  </>
                 ) : null}
                 <Text style={styles.bookingDuration}>
                   Duration: {Math.floor(bookingInfo.duration / 60)}h{" "}
@@ -204,6 +220,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bookingPrice: {
+    fontSize: 16,
+    marginBottom: 15,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  bookingPhone: {
     fontSize: 16,
     marginBottom: 15,
     color: "#007AFF",

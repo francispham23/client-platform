@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { formatDuration } from "@/utils";
 import { services } from "@/constants/Services";
@@ -51,7 +52,7 @@ export default function ServicesScreen() {
             },
           }}
         />
-        <View style={styles.mainContainer}>
+        <SafeAreaView style={styles.mainContainer}>
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}
@@ -121,7 +122,7 @@ export default function ServicesScreen() {
               </TouchableOpacity>
             </View>
           )}
-        </View>
+        </SafeAreaView>
       </ImageBackground>
     </View>
   );
