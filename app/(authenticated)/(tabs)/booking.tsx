@@ -16,12 +16,45 @@ import { generateTimeSlots } from "@/utils";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useBookingStore } from "@/store/bookingStore";
 import Colors from "@/constants/Colors";
+import ConfirmModal from "@/components/ConfirmModal";
 
 // Helper function to format time
 const formatTime = (hour: number, minute: number) => {
   const formattedHour = hour % 12 || 12;
   const formattedMinute = minute.toString().padStart(2, "0");
   return `${formattedHour}:${formattedMinute} ${hour >= 12 ? "PM" : "AM"}`;
+};
+
+// Add function to check if date is weekend
+const isWeekend = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = date.getDay();
+  return day === 5 || day === 6; // 5 is Saturday, 6 is Sunday
+};
+
+// Get today's date in YYYY-MM-DD format
+const today = new Date().toISOString().split("T")[0];
+
+// Disable weekends for the next year
+const disableWeekend = () => {
+  // Create disabled dates object for weekends
+  const disabledDates: {
+    [key: string]: { disabled: boolean; disableTouchEvent: boolean };
+  } = {};
+
+  let currentDate = new Date(today);
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  while (currentDate <= oneYearFromNow) {
+    const dateString = currentDate.toISOString().split("T")[0];
+    if (isWeekend(dateString)) {
+      disabledDates[dateString] = { disabled: true, disableTouchEvent: true };
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return disabledDates;
 };
 
 export default function BookingScreen() {
@@ -34,8 +67,6 @@ export default function BookingScreen() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-
-  const timeSlots = useMemo(() => generateTimeSlots(), []);
 
   const { data: existingBookings = [] } = useQuery({
     queryKey: ["bookings", user?.id],
@@ -66,54 +97,6 @@ export default function BookingScreen() {
     selectedServices: { duration, price, services },
   } = useBookingStore();
 
-  const durationMinutes = duration;
-
-  // Reset selections when duration changes
-  useEffect(() => {
-    setSelectedTime(null);
-    setSelectedSlots([]);
-  }, [duration]);
-
-  const handleDateSelect = (date: string) => {
-    setSelectedDate(date);
-    setSelectedTime(null);
-    setSelectedSlots([]);
-  };
-
-  // Update handleTimeSelect to check for booked slots
-  const handleTimeSelect = (time: string) => {
-    const startIndex = timeSlots.findIndex(
-      (slot) => formatTime(slot.hour, slot.minute) === time
-    );
-
-    // Calculate how many 30-minute slots we need
-    const slotsNeeded = Math.ceil(durationMinutes / 30);
-
-    // Check if we have enough slots available
-    if (startIndex + slotsNeeded > timeSlots.length) {
-      return;
-    }
-
-    // Get required slots
-    const requiredSlots = timeSlots.slice(startIndex, startIndex + slotsNeeded);
-
-    // Check if any required slot is already booked
-    const hasBookedSlot = requiredSlots.some((slot) =>
-      isSlotBooked(selectedDate, formatTime(slot.hour, slot.minute))
-    );
-
-    if (hasBookedSlot) {
-      return;
-    }
-
-    const newSelectedSlots = requiredSlots.map((slot) =>
-      formatTime(slot.hour, slot.minute)
-    );
-
-    setSelectedTime(time);
-    setSelectedSlots(newSelectedSlots);
-  };
-
   const { mutate: addBooking } = useMutation({
     mutationFn: async (booking: {
       user_id: string;
@@ -138,6 +121,10 @@ export default function BookingScreen() {
     },
   });
 
+  // Generate time slots
+  const timeSlots = useMemo(() => generateTimeSlots(), []);
+
+  // Handle booking confirmation
   const handleConfirmBooking = () => {
     if (!selectedDate || !selectedTime || !user) return;
 
@@ -145,7 +132,7 @@ export default function BookingScreen() {
       user_id: user.id,
       date: selectedDate,
       start_time: selectedTime,
-      duration: durationMinutes,
+      duration: duration,
       total_price: price,
       time_slots: selectedSlots,
       services: services
@@ -156,31 +143,53 @@ export default function BookingScreen() {
     });
   };
 
-  // Add function to check if date is weekend
-  const isWeekend = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = date.getDay();
-    return day === 5 || day === 6; // 5 is Saturday, 6 is Sunday
+  // Handle date selection
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setSelectedTime(null);
+    setSelectedSlots([]);
   };
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split("T")[0];
+  // Update handleTimeSelect to check for booked slots
+  const handleTimeSelect = (time: string) => {
+    const startIndex = timeSlots.findIndex(
+      (slot) => formatTime(slot.hour, slot.minute) === time
+    );
 
-  // Create disabled dates object for weekends
-  const disabledDates: {
-    [key: string]: { disabled: boolean; disableTouchEvent: boolean };
-  } = {};
-  let currentDate = new Date(today);
-  const oneYearFromNow = new Date();
-  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    // Calculate how many 30-minute slots we need
+    const slotsNeeded = Math.ceil(duration / 30);
 
-  while (currentDate <= oneYearFromNow) {
-    const dateString = currentDate.toISOString().split("T")[0];
-    if (isWeekend(dateString)) {
-      disabledDates[dateString] = { disabled: true, disableTouchEvent: true };
+    // Check if we have enough slots available
+    if (startIndex + slotsNeeded > timeSlots.length) {
+      return;
     }
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
+
+    // Get required slots
+    const requiredSlots = timeSlots.slice(startIndex, startIndex + slotsNeeded);
+
+    // Check if any required slot is already booked
+    const hasBookedSlot = requiredSlots.some((slot) =>
+      isSlotBooked(selectedDate, formatTime(slot.hour, slot.minute))
+    );
+
+    if (hasBookedSlot) {
+      return;
+    }
+
+    // Get new selected slots
+    const newSelectedSlots = requiredSlots.map((slot) =>
+      formatTime(slot.hour, slot.minute)
+    );
+
+    setSelectedTime(time);
+    setSelectedSlots(newSelectedSlots);
+  };
+
+  // Reset selections when duration changes
+  useEffect(() => {
+    setSelectedTime(null);
+    setSelectedSlots([]);
+  }, [duration]);
 
   return (
     <View style={styles.container}>
@@ -203,7 +212,7 @@ export default function BookingScreen() {
             }
             markedDates={{
               [selectedDate]: { selected: true, selectedColor: "#007AFF" },
-              ...disabledDates,
+              ...disableWeekend(),
             }}
             theme={{
               todayTextColor: "#007AFF",
@@ -216,10 +225,9 @@ export default function BookingScreen() {
             <View style={styles.timeContainer}>
               <Text style={styles.sectionTitle}>Available Times</Text>
               <View>
-                {durationMinutes ? (
+                {duration ? (
                   <Text style={styles.duration}>
-                    Duration: {Math.floor(durationMinutes / 60)}h{" "}
-                    {durationMinutes % 60}min
+                    Duration: {Math.floor(duration / 60)}h {duration % 60}min
                   </Text>
                 ) : (
                   <Text style={styles.thirdTitle}>
@@ -233,7 +241,7 @@ export default function BookingScreen() {
                   const isSelected = selectedSlots.includes(time);
                   const isBooked = isSlotBooked(selectedDate, time);
 
-                  const hasValidSlots = !!durationMinutes;
+                  const hasValidSlots = !!duration;
 
                   return (
                     <TouchableOpacity
@@ -277,45 +285,10 @@ export default function BookingScreen() {
         </View>
       ) : null}
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          // Alert.alert("Modal has been closed.");
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>
-              Thank you for booking with me! I will sms you shortly for
-              confirming the appointment!
-            </Text>
-            <TouchableOpacity
-              style={{
-                width: 240,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: Colors.lightGray,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text
-                style={{
-                  color: Colors.primary,
-                  fontWeight: "500",
-                  fontSize: 16,
-                }}
-              >
-                OK
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <ConfirmModal
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+      />
     </View>
   );
 }
@@ -405,26 +378,6 @@ const styles = StyleSheet.create({
   bookedTimeText: {
     color: "#FF4444",
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
   button: {
     borderRadius: 20,
     padding: 10,
@@ -439,10 +392,6 @@ const styles = StyleSheet.create({
   textStyle: {
     color: "white",
     fontWeight: "bold",
-    textAlign: "center",
-  },
-  modalText: {
-    marginBottom: 15,
     textAlign: "center",
   },
 });
