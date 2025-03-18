@@ -4,6 +4,7 @@ import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useQuery } from "@tanstack/react-query";
 import { useHeaderHeight } from "@react-navigation/elements";
+
 import AppointmentDetails from "@/components/AppointmentDetails";
 
 export interface BookingInfo {

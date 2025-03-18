@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Modal,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Calendar } from "react-native-calendars";
@@ -15,7 +14,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { generateTimeSlots } from "@/utils";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useBookingStore } from "@/store/bookingStore";
-import Colors from "@/constants/Colors";
+
 import ConfirmModal from "@/components/ConfirmModal";
 
 // Helper function to format time
