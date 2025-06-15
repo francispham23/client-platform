@@ -1,4 +1,10 @@
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
 import { Stack } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/hooks/useSupabase";
@@ -6,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useHeaderHeight } from "@react-navigation/elements";
 
 import AppointmentDetails from "@/components/AppointmentDetails";
+import { useForceRefresh } from "@/hooks/useForceRefresh";
 
 export interface BookingInfo {
   id: string;
@@ -26,7 +33,11 @@ export default function HomeScreen() {
   // Check if the user is an admin
   const isAdmin = user?.phoneNumbers[0].phoneNumber === "+12015550100";
 
-  const { data: bookings = [], isLoading } = useQuery({
+  const {
+    data: bookings = [],
+    isLoading,
+    refetch: refetchBookings,
+  } = useQuery({
     queryKey: ["bookings", user?.id, isAdmin],
     queryFn: async (): Promise<BookingInfo[]> => {
       const query = supabase
@@ -69,6 +80,8 @@ export default function HomeScreen() {
     enabled: isAdmin,
   });
 
+  const { forceRefreshing, onRefresh } = useForceRefresh(refetchBookings);
+
   // Create a map of user IDs to names
   const userMap = Object.fromEntries(
     users.map((user) => [
@@ -106,6 +119,14 @@ export default function HomeScreen() {
         contentContainerStyle={{
           paddingTop: headerHeight,
         }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            enabled
+            refreshing={forceRefreshing}
+            onRefresh={onRefresh}
+          />
+        }
       >
         <Text style={styles.sectionTitle}>Your Bookings</Text>
         {bookings.length === 0 ? (

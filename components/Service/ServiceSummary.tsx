@@ -15,7 +15,7 @@ export default function ServiceSummary({
   return (
     <View style={styles.summary}>
       <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Total Service Charge:</Text>
+        <Text style={styles.summaryLabel}>Estimated Total Service Charge:</Text>
         <Text style={styles.priceValue}>${totalPrice}</Text>
       </View>
       <View style={styles.summaryRow}>

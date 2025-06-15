@@ -48,7 +48,7 @@ const AppointmentDetails = ({
         {bookingInfo.duration % 60}min
       </Text>
       <Text style={styles.bookingPrice}>
-        Total Service Charge: ${bookingInfo.totalPrice}
+        Estimated Total Service Charge: ${bookingInfo.totalPrice}
       </Text>
 
       <Text style={styles.servicesTitle}>Services:</Text>
